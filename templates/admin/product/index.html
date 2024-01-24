@@ -1,0 +1,316 @@
+{% extends 'admin/master.html' %}
+{% block main_content %}
+    <div id="product">
+        <div class="col-12">
+            <div class="bg-light rounded h-100 p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-4"><i class="fab fa-product-hunt me-2"></i> &nbsp;Product list</h6>
+                    <a href="#" type="button" class="btn btn-outline-success" data-bs-toggle="modal"
+                       data-bs-target="#insertModal">Add new product
+                        &nbsp;<i class="far fa-plus-square me-2"></i></a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Cost</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Category</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="(product, index) in product_list" :key="product.id">
+                            <th scope="row">[[index + 1]]</th>
+                            <td>[[ product.name ]]</td>
+                            <td>$.[[ product.cost ]]</td>
+                            <td>$.[[ product.price ]]</td>
+                            <td>[[ product.category ]]</td>
+                            <td>
+                                <a href="#" type="button" class="btn btn-outline-secondary" data-bs-toggle="modal"
+                                   data-bs-target="#updateModal"
+                                   @click="getOldData(product.id, product.name, product.category_id, product.cost, product.price)"
+                                >
+                                    Edit &nbsp;<i class="far fa-edit"></i>
+                                </a>
+                                <a href="#"
+                                   class="btn btn-outline-danger delete-button" data-bs-toggle="modal"
+                                   @click="getRecordId([[product.id]])"
+                                   data-bs-target="#deleteConfirmationModal">Delete<i class="far fa-trash-alt"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {#Insert modal#}
+        <div class="modal fade" id="insertModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+             aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel"><i class="fab fa-product-hunt me-2"></i>
+                            &nbsp;Insert product
+                        </h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form @submit.prevent="saveProduct" enctype="multipart/form-data" ref="productForm">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="product_name" class="form-label">Name <span
+                                        style="color: red">*</span></label>
+                                <input type="text" class="form-control" v-model="newProduct.product_name"
+                                       id="product_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="product_cost" class="form-label">Cost <span
+                                        style="color: red">*</span></label>
+                                <input type="text" class="form-control" v-model="newProduct.product_cost"
+                                       id="product_cost" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="product_price" class="form-label">Price <span
+                                        style="color: red">*</span></label>
+                                <input type="text" class="form-control" v-model="newProduct.product_price"
+                                       id="product_price" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="category_id" class="form-label">Category <span
+                                        style="color: red">*</span></label>
+                                <select class="form-select" v-model="newProduct.category_id" id="category_id">
+                                    <option v-for="cat in category_list" :key="cat.id" :value="cat.id">
+                                        [[cat.name]]
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-outline-primary" @click="saveProduct">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {#Insert modal#}
+        <div class="modal fade" id="deleteConfirmationModal" data-bs-backdrop="static" data-bs-keyboard="false"
+             tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="deleteConfirmationModalLabel"><i
+                                class="fab fa-product-hunt"></i>
+                            &nbsp;Remove product</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form>
+                        <div class="modal-body">
+                            <input name="recordID" id="recordID" type="hidden">
+                            <h6 class="text-danger">Are you sure you want to remove this Product?</h6>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-primary" id="confirmDelete"
+                                    @click="deleteProduct">Yes
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">No</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {#Update Modal#}
+        <div class="modal fade" id="updateModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+             aria-labelledby="staticBackdropLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="staticBackdropLabel"><i class="fab fa-product-hunt me-2"></i>
+                            &nbsp;Update product</h1>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form @submit.prevent="updateProduct" enctype="multipart/form-data" method="POST">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <input type="hidden" v-model="updatedProduct.edit_product_id" id="edit_product_id">
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit_product_name" class="form-label">Name <span style="color: red">*</span></label>
+                                <input type="text" class="form-control" v-model="updatedProduct.edit_product_name"
+                                       id="edit_product_name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit_product_cost" class="form-label">Cost <span style="color: red">*</span></label>
+                                <input type="text" class="form-control" v-model="updatedProduct.edit_product_cost"
+                                       id="edit_product_cost" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit_product_price" class="form-label">Price <span
+                                        style="color: red">*</span></label>
+                                <input type="text" class="form-control" v-model="updatedProduct.edit_product_price"
+                                       id="edit_product_price" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit_category_id" class="form-label">Category <span
+                                        style="color: red">*</span></label>
+                                <select class="form-select" v-model="updatedProduct.edit_category_id"
+                                        id="edit_category_id">
+                                    <option v-for="cat in category_list" :key="cat.id" :value="cat.id">
+                                        [[cat.name]]
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-outline-primary" @click="updateProduct">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {#End Update Modal#}
+    </div>
+    <script>
+        var vue_obj = new Vue({
+            el: '#product',
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    product_list: [],
+                    category_list: [],
+                    newProduct: {
+                        product_name: '',
+                        product_cost: '',
+                        product_price: '',
+                        category_id: '',
+                    },
+
+                    updatedProduct: {
+                        edit_product_name: '',
+                        edit_product_cost: '',
+                        edit_product_price: '',
+                        edit_category_id: '',
+                        edit_product_id: '',
+                    },
+                };
+            },
+            created() {
+                JsLoadingOverlay.show();
+            },
+            mounted() {
+                this.fetchData();
+            },
+            methods: {
+                getOldData(id, product_name, category_id, cost, price) {
+                    this.updatedProduct.edit_product_id = id;
+                    this.updatedProduct.edit_product_name = product_name;
+                    this.updatedProduct.edit_product_price = price;
+                    this.updatedProduct.edit_product_cost = cost;
+                    this.updatedProduct.edit_category_id = category_id;
+                },
+                getRecordId(id) {
+                    document.getElementById('recordID').value = id;
+                },
+                //Delete
+                deleteProduct() {
+                    const productId = document.getElementById('recordID').value;
+                    axios.delete(`http://127.0.0.1:5000/api/delete_product/${productId}`)
+                        .then(response => {
+                            console.log(productId);
+                            // Close the delete confirmation modal
+                            $('#deleteConfirmationModal').modal('hide');
+                            // Refresh the product list
+                            this.fetchData();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            // Handle the error as needed
+                        });
+                },
+                // FetchAllData
+                fetchData() {
+                    axios.get('http://127.0.0.1:5000/api/get_all_product')
+                        .then(response => {
+                            this.product_list = response.data.product;
+                            this.category_list = response.data.category;
+                            JsLoadingOverlay.hide();
+                        })
+                        .catch(error => {
+                            setTimeout(() => {
+                                JsLoadingOverlay.hide();
+                            }, 800);
+                            alert('Error: ' + error.message);
+                        });
+                },
+                saveProduct() {
+                    const formData = new FormData();
+                    formData.append('product_name', this.newProduct.product_name);
+                    formData.append('product_cost', this.newProduct.product_cost);
+                    formData.append('product_price', this.newProduct.product_price);
+                    formData.append('category_id', this.newProduct.category_id);
+
+                    axios.post('http://127.0.0.1:5000/api/add_product', formData)
+                        .then(response => {
+                            console.log(formData);
+                            // Handle success
+                            console.log(response.data.message);
+                            // Close the modal
+                            $('#insertModal').modal('hide');
+                            // Reset the form
+                            this.$refs.productForm.reset();
+                            // Refresh the product list
+                            this.fetchData();
+                        })
+                        .catch(error => {
+                            // Log the entire error object
+                            console.error('Error:', error);
+
+                            // Check if the error has a response
+                            if (error.response) {
+                                // The request was made and the server responded with a status code
+                                // that falls out of the range of 2xx
+                                console.error('Response data:', error.response.data);
+                                console.error('Response status:', error.response.status);
+                                console.error('Response headers:', error.response.headers);
+                            } else if (error.request) {
+                                // The request was made but no response was received
+                                console.error('No response received:', error.request);
+                            } else {
+                                // Something happened in setting up the request that triggered an Error
+                                console.error('Error message:', error.message);
+                            }
+                        });
+                },
+                updateProduct() {
+                    const productId = this.updatedProduct.edit_product_id;  // Corrected variable name
+                    const editFormData = new FormData();
+                    editFormData.append('edit_product_name', this.updatedProduct.edit_product_name);
+                    editFormData.append('edit_product_cost', this.updatedProduct.edit_product_cost);
+                    editFormData.append('edit_product_price', this.updatedProduct.edit_product_price);
+                    editFormData.append('edit_category_id', this.updatedProduct.edit_category_id);
+                    editFormData.append('edit_product_id', productId);
+                    console.log('ididi', productId);  // Corrected console log
+
+                    axios.put(`http://127.0.0.1:5000/api/update_product/${productId}`, editFormData)
+                        .then(response => {
+                            console.log(productId);
+                            console.log(editFormData);
+                            // Close the update modal
+                            $('#updateModal').modal('hide');
+                            this.fetchData();
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            // Handle the error as needed
+                        });
+                }
+            },
+        });
+
+    </script>
+{% endblock %}
